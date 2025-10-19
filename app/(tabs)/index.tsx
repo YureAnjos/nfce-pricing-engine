@@ -1,98 +1,165 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import { LinearGradient } from "expo-linear-gradient";
+import { router } from "expo-router";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { WebView } from "react-native-webview";
+import useMainContext from "../../hooks/useContext";
+import useTheme, { ColorScheme } from "../../hooks/useTheme";
+import { IItem, IScrapData } from "../../types/types";
 
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
+const Index = () => {
+  const { colors } = useTheme();
+  const { setScanData, scannedUrl, setScannedUrl } = useMainContext();
 
-export default function HomeScreen() {
+  const homeStyles = createHomeStyles(colors);
+
+  const handleReceiveScrapData = (data: IScrapData) => {
+    const items = data.items.map((item) => {
+      return {
+        name: item.name,
+        units: item.units,
+        price: item.price,
+        profitMargin: 30,
+        applyDiscounts: false,
+        discount: 0,
+        discountPerc: 0,
+      };
+    }) as [IItem];
+
+    setScanData({
+      items,
+      name: data.name,
+      totalPrice: data.totalPrice,
+      date: data.date,
+    });
+    setScannedUrl(null);
+
+    router.navigate("/note");
+  };
+
+  const goToScan = () => {
+    setScannedUrl(null);
+    router.navigate("/scanner");
+  };
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
+    <LinearGradient
+      style={homeStyles.gradient}
+      colors={colors.gradients.background}
+    >
+      <SafeAreaView style={homeStyles.container}>
+        <Text style={homeStyles.title}>Leitor de Nota Fiscal</Text>
+        <TouchableOpacity
+          style={homeStyles.button}
+          activeOpacity={0.8}
+          onPress={goToScan}
+        >
+          <Text style={homeStyles.text}>Clique para iniciar a leitura</Text>
+        </TouchableOpacity>
+
+        {scannedUrl && (
+          <View style={{ backgroundColor: "#fff", width: 0, height: 0 }}>
+            <WebView
+              source={{ uri: scannedUrl }}
+              injectedJavaScript={injectedJS}
+              onMessage={(e) => {
+                const data = e.nativeEvent.data;
+
+                handleReceiveScrapData(JSON.parse(data));
+              }}
             />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
-
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+          </View>
+        )}
+      </SafeAreaView>
+    </LinearGradient>
   );
-}
+};
 
-const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
-  },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
-  },
-});
+const createHomeStyles = (colors: ColorScheme) => {
+  const styles = StyleSheet.create({
+    gradient: {
+      flex: 1,
+    },
+    container: {
+      flex: 1,
+      alignItems: "center",
+      justifyContent: "center",
+      padding: 22,
+      gap: 12,
+    },
+    title: {
+      color: colors.text,
+      fontSize: 28,
+      fontWeight: "bold",
+    },
+    text: {
+      color: colors.text,
+      fontSize: 18,
+    },
+    button: {
+      backgroundColor: colors.surface,
+      paddingVertical: 12,
+      paddingHorizontal: 16,
+      borderRadius: 100,
+      shadowColor: colors.shadow,
+      shadowOffset: {
+        width: 0,
+        height: 1,
+      },
+      shadowOpacity: 0.2,
+      shadowRadius: 1.4,
+
+      elevation: 2,
+    },
+  });
+  return styles;
+};
+
+const injectedJS = `
+  (function() {
+    const checkTable = () => {
+      const rows = document.querySelectorAll('table tr');
+      if (rows.length === 0) return false;
+      return true;
+    };
+
+    const observer = new MutationObserver((mutations, obs) => {
+      if (checkTable()) {
+        const items = [];
+        const rows = document.querySelectorAll('table tr');
+        const txtTopo = document.querySelector('.txtTopo')
+        const txtMax = document.querySelector('.txtMax')
+
+        rows.forEach((row) => {
+          const nameSpan = row.querySelector('.txtTit');
+          const valueSpan = row.querySelector('.valor');
+          const qtdSpan  = row.querySelector('.Rqtd');
+
+          if (nameSpan && valueSpan && qtdSpan) {
+            items.push({ 
+              name: nameSpan.innerText, 
+              price: parseFloat(valueSpan.innerText.trim().replace(',', '.')),
+              units: parseInt(qtdSpan.innerText.trim().split(':')[1]),
+            });
+          }
+        });
+
+        const date = Array.from(
+          document.querySelector(
+            "body > div:nth-child(1) > div:nth-child(2) > div > div:nth-child(2) > div:nth-child(1) > div > ul > li"
+          ).childNodes
+        )
+          .filter(n => n.nodeType === Node.TEXT_NODE)[2]
+          ?.nodeValue.match(/\\d{2}\\/\\d{2}\\/\\d{4}/)?.[0];
+
+        window.ReactNativeWebView.postMessage(JSON.stringify({ date, items, name: txtTopo.innerText.trim(), totalPrice: txtMax.innerText.trim() }));
+        obs.disconnect();
+      }
+    });
+
+    observer.observe(document.body, { childList: true, subtree: true });
+  })();
+  true;
+`;
+
+export default Index;
