@@ -57,8 +57,8 @@ const Index = () => {
           <Text style={homeStyles.text}>Clique para iniciar a leitura</Text>
         </TouchableOpacity>
 
-        {scannedUrl && (
-          <View style={{ backgroundColor: "#fff", width: 0, height: 0 }}>
+        {scannedUrl && scannedUrl.match("sefaz") && (
+          <View style={{ backgroundColor: "#fff", width: 300, height: 300 }}>
             <WebView
               source={{ uri: scannedUrl }}
               injectedJavaScript={injectedJS}
@@ -69,6 +69,11 @@ const Index = () => {
               }}
             />
           </View>
+        )}
+        {scannedUrl && !scannedUrl.match("sefaz") && (
+          <Text style={[homeStyles.text, { color: colors.danger }]}>
+            QR-Code inválido!
+          </Text>
         )}
       </SafeAreaView>
     </LinearGradient>

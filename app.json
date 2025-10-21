@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "pai-nota-fiscal",
+    "name": "NFCe Reader",
     "slug": "pai-nota-fiscal",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -14,9 +14,12 @@
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/images/android-icon-foreground.png",
-        "backgroundImage": "./assets/images/android-icon-background.png",
-        "monochromeImage": "./assets/images/android-icon-monochrome.png"
+        // "foregroundImage": "./assets/images/android-icon-foreground.png",
+        // "backgroundImage": "./assets/images/android-icon-background.png",
+        // "monochromeImage": "./assets/images/android-icon-monochrome.png"
+        "foregroundImage": "./assets/images/icon.png",
+        "backgroundImage": "./assets/images/icon.png",
+        "monochromeImage": "./assets/images/icon.png"
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
@@ -47,9 +50,17 @@
       [
         "expo-camera",
         {
-          "cameraPermission": "Allow $(PRODUCT_NAME) to access your camera",
-          "microphonePermission": "Allow $(PRODUCT_NAME) to access your microphone",
+          "cameraPermission": "Permita que $(PRODUCT_NAME) acesse sua câmera",
+          "microphonePermission": "Permita que $(PRODUCT_NAME) acesse seu microfone",
           "recordAudioAndroid": true
+        }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "usesCleartextTraffic": true
+          }
         }
       ]
     ],
