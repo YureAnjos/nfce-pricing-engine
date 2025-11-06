@@ -43,17 +43,10 @@ const Index = () => {
   };
 
   return (
-    <LinearGradient
-      style={homeStyles.gradient}
-      colors={colors.gradients.background}
-    >
+    <LinearGradient style={homeStyles.gradient} colors={colors.gradients.background}>
       <SafeAreaView style={homeStyles.container}>
         <Text style={homeStyles.title}>Leitor de Nota Fiscal</Text>
-        <TouchableOpacity
-          style={homeStyles.button}
-          activeOpacity={0.8}
-          onPress={goToScan}
-        >
+        <TouchableOpacity style={homeStyles.button} activeOpacity={0.8} onPress={goToScan}>
           <Text style={homeStyles.text}>Clique para iniciar a leitura</Text>
         </TouchableOpacity>
 
@@ -71,9 +64,7 @@ const Index = () => {
           </View>
         )}
         {scannedUrl && !scannedUrl.match("sefaz") && (
-          <Text style={[homeStyles.text, { color: colors.danger }]}>
-            QR-Code inválido!
-          </Text>
+          <Text style={[homeStyles.text, { color: colors.danger }]}>QR-Code inválido!</Text>
         )}
       </SafeAreaView>
     </LinearGradient>

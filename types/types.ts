@@ -5,7 +5,7 @@ type ScrapItem = {
 };
 
 export type IScrapData = {
-  items: [ScrapItem];
+  items: ScrapItem[];
   name: string;
   date: string;
   totalPrice: string;
@@ -22,7 +22,7 @@ export type IItem = {
 };
 
 export type IScanData = {
-  items: [IItem];
+  items: IItem[];
   name: string;
   date: string;
   totalPrice: string;
