@@ -7,10 +7,12 @@ const PercentageInput = ({
   value,
   label,
   onChangeValue,
+  disabled,
 }: {
   value: number;
   label: string;
   onChangeValue: (value: number) => void;
+  disabled?: boolean;
 }) => {
   const { colors } = useTheme();
   const inputStyles = createInputStyles(colors);
@@ -48,7 +50,7 @@ const PercentageInput = ({
   };
 
   return (
-    <View style={inputStyles.container}>
+    <View style={[inputStyles.container, { opacity: disabled ? 0.5 : 1 }]}>
       <Text style={inputStyles.label}>{label}</Text>
       <TextInput
         ref={inputRef}
@@ -58,6 +60,9 @@ const PercentageInput = ({
         style={inputStyles.input}
         value={displayValue}
         onChangeText={handleChangeText}
+        editable={!disabled}
+        contextMenuHidden={disabled}
+        caretHidden={disabled}
       />
     </View>
   );

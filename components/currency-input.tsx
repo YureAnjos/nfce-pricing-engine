@@ -3,17 +3,15 @@ import { StyleSheet, Text, TextInput, View } from "react-native";
 import useTheme, { ColorScheme } from "../hooks/useTheme";
 import { formatBRL, parseBRL } from "../util";
 
-const CurrencyInput = ({
-  value,
-  label,
-  onChangeValue,
-  style,
-}: {
+type IProps = {
   value: number;
   label: string;
   onChangeValue: (value: number) => void;
   style?: any;
-}) => {
+  disabled?: boolean;
+};
+
+const CurrencyInput = ({ value, label, onChangeValue, style, disabled }: IProps) => {
   const { colors } = useTheme();
   const inputStyles = createInputStyles(colors);
 
@@ -32,13 +30,13 @@ const CurrencyInput = ({
     setDisplayValue(formattedText);
     onChangeValue(numericValue);
 
-    if (inputRef.current) {
-      inputRef.current.setNativeProps({ text: formattedText });
-    }
+    // if (inputRef.current) {
+    //   inputRef.current.setNativeProps({ text: formattedText });
+    // }
   };
 
   return (
-    <View style={[inputStyles.container, style]}>
+    <View style={[inputStyles.container, style, { opacity: disabled ? 0.5 : 1 }]}>
       <Text style={inputStyles.label}>{label}</Text>
       <TextInput
         ref={inputRef}
@@ -47,6 +45,9 @@ const CurrencyInput = ({
         style={inputStyles.input}
         value={displayValue}
         onChangeText={handleChangeText}
+        editable={!disabled}
+        contextMenuHidden={disabled}
+        caretHidden={disabled}
       />
     </View>
   );

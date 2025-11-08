@@ -1,28 +1,27 @@
 import React from "react";
-import { StyleSheet, Text, TextInput, View } from "react-native";
+import { StyleSheet, Text, TextInput, TextInputProps, View } from "react-native";
 import useTheme, { ColorScheme } from "../hooks/useTheme";
 
-const Input = ({
-  value,
-  label,
-  onChangeText,
-}: {
-  value: string;
+type IProps = TextInputProps & {
   label: string;
-  onChangeText: (text: string) => void;
-}) => {
+  disabled?: boolean;
+};
+
+const Input = ({ label, disabled = false, ...props }: IProps) => {
   const { colors } = useTheme();
   const inputStyles = createInputStyles(colors);
 
   return (
-    <View style={inputStyles.container}>
+    <View style={[inputStyles.container, { opacity: disabled ? 0.5 : 1 }]}>
       <Text style={inputStyles.label}>{label}</Text>
       <TextInput
         inputMode="numeric"
         returnKeyType="done"
         style={inputStyles.input}
-        value={value}
-        onChangeText={onChangeText}
+        editable={!disabled}
+        contextMenuHidden={disabled}
+        caretHidden={disabled}
+        {...props}
       />
     </View>
   );
