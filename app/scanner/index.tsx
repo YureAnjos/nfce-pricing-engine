@@ -1,4 +1,5 @@
 import { MaterialIcons } from "@expo/vector-icons";
+import { useAudioPlayer } from "expo-audio";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
@@ -7,6 +8,8 @@ import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import useMainContext from "../../hooks/useContext";
 import useTheme, { ColorScheme } from "../../hooks/useTheme";
 
+const beepSound = require("../../assets/sounds/beep.mp3");
+
 const Scanner = () => {
   const { colors } = useTheme();
   const { setScannedUrl } = useMainContext();
@@ -14,6 +17,8 @@ const Scanner = () => {
   const [isFlashOn, setIsFlashOn] = useState(false);
 
   const styles = createScannerStyles(colors);
+
+  const player = useAudioPlayer(beepSound);
 
   useEffect(() => {
     grantPermission();
@@ -28,10 +33,7 @@ const Scanner = () => {
     );
   if (!permission.granted) {
     return (
-      <LinearGradient
-        style={styles.container}
-        colors={colors.gradients.background}
-      >
+      <LinearGradient style={styles.container} colors={colors.gradients.background}>
         <View
           style={[
             styles.container,
@@ -43,19 +45,9 @@ const Scanner = () => {
             },
           ]}
         >
-          <Text style={[styles.text, { fontSize: 20, textAlign: "center" }]}>
-            Sem permissão para a cessar a câmera
-          </Text>
-          <TouchableOpacity
-            style={styles.permissionButton}
-            activeOpacity={0.8}
-            onPress={grantPermission}
-          >
-            <Text
-              style={{ color: colors.text, fontSize: 18, textAlign: "center" }}
-            >
-              Ativar permissão
-            </Text>
+          <Text style={[styles.text, { fontSize: 20, textAlign: "center" }]}>Sem permissão para a cessar a câmera</Text>
+          <TouchableOpacity style={styles.permissionButton} activeOpacity={0.8} onPress={grantPermission}>
+            <Text style={{ color: colors.text, fontSize: 18, textAlign: "center" }}>Ativar permissão</Text>
           </TouchableOpacity>
         </View>
       </LinearGradient>
@@ -65,6 +57,8 @@ const Scanner = () => {
   const toggleFlash = () => setIsFlashOn((prev) => !prev);
   const back = () => router.back();
   const onBarcodeScanned = ({ data }: { data: string }) => {
+    player.seekTo(0);
+    player.play();
     setScannedUrl(data);
     back();
   };
@@ -99,25 +93,14 @@ const Scanner = () => {
 
         <View style={styles.buttonsContainer}>
           <TouchableOpacity
-            style={[
-              styles.button,
-              { backgroundColor: isFlashOn ? colors.text : colors.bg },
-            ]}
+            style={[styles.button, { backgroundColor: isFlashOn ? "#f8fafc" : "#0f172a" }]}
             activeOpacity={0.5}
             onPress={toggleFlash}
           >
-            <MaterialIcons
-              name="flashlight-on"
-              size={32}
-              color={isFlashOn ? colors.bg : colors.text}
-            />
+            <MaterialIcons name="flashlight-on" size={32} color={isFlashOn ? "#0f172a" : "#f8fafc"} />
           </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.button}
-            activeOpacity={0.5}
-            onPress={back}
-          >
-            <MaterialIcons name="close" size={32} color={colors.text} />
+          <TouchableOpacity style={styles.button} activeOpacity={0.5} onPress={back}>
+            <MaterialIcons name="close" size={32} color={"#f8fafc"} />
           </TouchableOpacity>
         </View>
       </View>
@@ -158,7 +141,7 @@ const createScannerStyles = (colors: ColorScheme) => {
       elevation: 2,
     },
     text: {
-      color: colors.text,
+      color: "#f8fafc",
       fontWeight: "bold",
       fontSize: 24,
     },
@@ -169,7 +152,7 @@ const createScannerStyles = (colors: ColorScheme) => {
       flexWrap: "wrap",
     },
     button: {
-      backgroundColor: colors.bg,
+      backgroundColor: "#0f172a",
       padding: 16,
       borderRadius: "50%",
       opacity: 0.8,
@@ -190,7 +173,7 @@ const createScannerStyles = (colors: ColorScheme) => {
       borderTopWidth: borderWidth,
       borderLeftWidth: borderWidth,
       borderTopLeftRadius: 12,
-      borderColor: colors.text,
+      borderColor: "#f8fafc",
     },
 
     topRightContainer: {
@@ -204,7 +187,7 @@ const createScannerStyles = (colors: ColorScheme) => {
       borderTopWidth: borderWidth,
       borderRightWidth: borderWidth,
       borderTopRightRadius: 12,
-      borderColor: colors.text,
+      borderColor: "#f8fafc",
     },
 
     bottomLeftContainer: {
@@ -218,7 +201,7 @@ const createScannerStyles = (colors: ColorScheme) => {
       borderLeftWidth: borderWidth,
       borderBottomWidth: borderWidth,
       borderBottomLeftRadius: 12,
-      borderColor: colors.text,
+      borderColor: "#f8fafc",
     },
 
     bottomRightContainer: {
@@ -233,7 +216,7 @@ const createScannerStyles = (colors: ColorScheme) => {
       borderRightWidth: borderWidth,
       borderBottomWidth: borderWidth,
       borderBottomRightRadius: 12,
-      borderColor: colors.text,
+      borderColor: "#f8fafc",
     },
   });
 };

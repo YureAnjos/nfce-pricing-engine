@@ -22,18 +22,26 @@ const TabsLayout = () => {
         name="index"
         options={{
           title: "Scanner",
-          tabBarIcon: ({ color, size }) => (
-            <MaterialCommunityIcons name="qrcode" size={size} color={color} />
-          ),
+          tabBarIcon: ({ color, size }) => <MaterialCommunityIcons name="qrcode" size={size} color={color} />,
         }}
       />
       <Tabs.Screen
         name="note"
         options={{
           title: "Nota",
-          tabBarIcon: ({ color, size }) => (
-            <MaterialIcons name="notes" size={size} color={color} />
-          ),
+          tabBarIcon: ({ color, size }) => <MaterialIcons name="receipt" size={size} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="notes-list"
+        options={{
+          title: "Notas Salvas",
+          tabBarIcon: ({ color, size, focused }) =>
+            focused ? (
+              <MaterialIcons name="folder-open" size={size} color={color} />
+            ) : (
+              <MaterialIcons name="folder" size={size} color={color} />
+            ),
         }}
       />
     </Tabs>

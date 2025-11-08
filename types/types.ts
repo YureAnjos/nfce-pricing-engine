@@ -19,6 +19,8 @@ export type IItem = {
   applyDiscounts: boolean;
   discount: number;
   discountPerc: number;
+  useCustomFinalPrice?: boolean;
+  customFinalPrice?: number;
 };
 
 export type IScanData = {
@@ -26,4 +28,5 @@ export type IScanData = {
   name: string;
   date: string;
   totalPrice: string;
+  url: string;
 };

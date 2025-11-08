@@ -1,8 +1,9 @@
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { WebView } from "react-native-webview";
+import Button from "../../components/ui/button";
 import useMainContext from "../../hooks/useContext";
 import useTheme, { ColorScheme } from "../../hooks/useTheme";
 import { IItem, IScrapData } from "../../types/types";
@@ -31,6 +32,7 @@ const Index = () => {
       name: data.name,
       totalPrice: data.totalPrice,
       date: data.date,
+      url: scannedUrl,
     });
     setScannedUrl(null);
 
@@ -46,9 +48,8 @@ const Index = () => {
     <LinearGradient style={homeStyles.gradient} colors={colors.gradients.background}>
       <SafeAreaView style={homeStyles.container}>
         <Text style={homeStyles.title}>Leitor de Nota Fiscal</Text>
-        <TouchableOpacity style={homeStyles.button} activeOpacity={0.8} onPress={goToScan}>
-          <Text style={homeStyles.text}>Clique para iniciar a leitura</Text>
-        </TouchableOpacity>
+
+        <Button text="Clique para iniciar a leitura" onPress={goToScan} />
 
         {scannedUrl && scannedUrl.match("sefaz") && (
           <View style={{ backgroundColor: "#fff", width: 300, height: 300 }}>

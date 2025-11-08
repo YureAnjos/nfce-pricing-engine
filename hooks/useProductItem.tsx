@@ -13,35 +13,27 @@ import { runOnUISync } from "react-native-worklets";
 import { IItem } from "../types/types";
 import { formatBRL, toNumber } from "../util";
 
-export const useProductItem = ({ data, onChange }: { data: IItem; onChange: (newData: IItem) => void }) => {
-  const [unitsStr, setUnitsStr] = useState(String(data.units));
-  const [price, setPrice] = useState(data.price);
-  const [profitMargin, setProfitMargin] = useState(data.profitMargin);
-  const [applyDiscounts, setApplyDiscount] = useState(data.applyDiscounts);
-  const [discounts, setDiscounts] = useState(data.discount);
-  const [discountsPerc, setDiscountsPerc] = useState(data.discountPerc);
+export const useProductItem = ({ data, onChange }: { data: IItem; onChange: (newData: Partial<IItem>) => void }) => {
+  const [unitsStr, setUnitsStr] = useState(String(data.units) ?? "0");
+  const [price, setPrice] = useState(data.price ?? 0);
+  const [profitMargin, setProfitMargin] = useState(data.profitMargin ?? 0);
+  const [applyDiscounts, setApplyDiscount] = useState(data.applyDiscounts ?? false);
+  const [discounts, setDiscounts] = useState(data.discount ?? 0);
+  const [discountsPerc, setDiscountsPerc] = useState(data.discountPerc ?? 0);
+  const [useCustomFinalPrice, setUseCustomFinalPrice] = useState(data.useCustomFinalPrice ?? false);
+  const [customFinalPrice, setCustomFinalPrice] = useState(data.customFinalPrice ?? 0);
   const [lastChanged, setLastChanged] = useState<"discounts" | "discountsPerc" | null>(null);
 
   // updates states when data prop changes
   useEffect(() => {
-    setUnitsStr(String(data.units));
-    setPrice(data.price);
-    setProfitMargin(data.profitMargin);
-    setDiscounts(data.discount);
-    setDiscountsPerc(data.discountPerc);
+    setUnitsStr(String(data.units) ?? "0");
+    setPrice(data.price ?? 0);
+    setProfitMargin(data.profitMargin ?? 0);
+    setDiscounts(data.discount ?? 0);
+    setDiscountsPerc(data.discountPerc ?? 0);
+    setUseCustomFinalPrice(data.useCustomFinalPrice ?? false);
+    setCustomFinalPrice(data.customFinalPrice ?? 0);
   }, [data]);
-
-  useEffect(() => {
-    onChange({
-      name: data.name,
-      units: Math.floor(toNumber(unitsStr)),
-      price,
-      profitMargin,
-      applyDiscounts,
-      discount: discounts,
-      discountPerc: discountsPerc,
-    });
-  }, [price, profitMargin, applyDiscounts, discounts, onChange, data.name, data.units, discountsPerc, unitsStr]);
 
   useEffect(() => {
     if (lastChanged !== "discounts") return;
@@ -49,7 +41,8 @@ export const useProductItem = ({ data, onChange }: { data: IItem; onChange: (new
 
     const newDiscountsPerc = (discounts / price) * 100;
     setDiscountsPerc(newDiscountsPerc);
-  }, [price, discounts, lastChanged]);
+    onChange({ discountPerc: newDiscountsPerc });
+  }, [price, discounts, lastChanged, onChange]);
 
   useEffect(() => {
     if (lastChanged !== "discountsPerc") return;
@@ -57,25 +50,42 @@ export const useProductItem = ({ data, onChange }: { data: IItem; onChange: (new
 
     const newDiscount = price * (discountsPerc / 100);
     setDiscounts(newDiscount);
-  }, [price, discountsPerc, lastChanged]);
+    onChange({ discount: newDiscount });
+  }, [price, discountsPerc, lastChanged, onChange]);
 
-  const onUnitsChanged = (text) => setUnitsStr(text);
-  const onPriceChanged = (value) => setPrice(value / 100);
+  // Actions (on)
+  const onUnitsChanged = (text) => {
+    setUnitsStr(text);
+    onChange({ units: Math.floor(toNumber(text)) });
+  };
+  const onPriceChanged = (value) => {
+    setPrice(value / 100);
+    onChange({ price: value / 100 });
+  };
   const onMarginChanged = (value) => setProfitMargin(value);
   const onDiscountsChanged = (value) => {
     setDiscounts(value / 100);
     setLastChanged("discounts");
+    onChange({ discount: value / 100 });
   };
   const onDiscountsPercChanged = (value) => {
     setDiscountsPerc(value);
     setLastChanged("discountsPerc");
+    onChange({ discountPerc: value });
+  };
+  const onCustomFinalPriceChanged = (value) => {
+    setCustomFinalPrice(value / 100);
+    onChange({ customFinalPrice: value / 100 });
   };
 
   const units = Math.floor(toNumber(unitsStr));
   const unitPrice = price / units;
-  const priceDiscounted = price - (applyDiscounts ? discounts : 0);
+  let priceDiscounted = price - (applyDiscounts ? discounts : 0);
   const unitPriceDiscounted = priceDiscounted / units;
-  const unitFinalPrice = unitPriceDiscounted * (1 + profitMargin / 100);
+  let unitFinalPrice = unitPriceDiscounted * (1 + profitMargin / 100);
+  if (useCustomFinalPrice) {
+    unitFinalPrice = customFinalPrice;
+  }
 
   const discountsListRef = useAnimatedRef<Animated.View>();
   const discountsListHeightValue = useSharedValue(0);
@@ -84,11 +94,21 @@ export const useProductItem = ({ data, onChange }: { data: IItem; onChange: (new
     height: interpolate(discountsAnimProgress.value, [0, 1], [0, discountsListHeightValue.value], Extrapolation.CLAMP),
   }));
 
+  const customPriceRef = useAnimatedRef<Animated.View>();
+  const customPriceHeightValue = useSharedValue(0);
+  const customPriceAnimProgress = useDerivedValue(() => (useCustomFinalPrice ? withTiming(1) : withTiming(0)));
+  const customPriceAnimationStyle = useAnimatedStyle(() => ({
+    height: interpolate(customPriceAnimProgress.value, [0, 1], [0, customPriceHeightValue.value], Extrapolation.CLAMP),
+  }));
+
   const containerRef = useAnimatedRef<Animated.View>();
   const containerSubInfoRef = useAnimatedRef<Animated.View>();
   const _containerHeightValue = useSharedValue(0);
   const containerHeightValue = useDerivedValue(
-    () => _containerHeightValue.value + (applyDiscounts ? discountsListHeightValue.value : 0)
+    () =>
+      _containerHeightValue.value +
+      (applyDiscounts ? discountsListHeightValue.value : 0) +
+      (useCustomFinalPrice ? customPriceHeightValue.value : 0)
   );
   const containerSubInfoHeightValue = useSharedValue(18.6666); // estimated size, used because this is open by default
 
@@ -107,20 +127,41 @@ export const useProductItem = ({ data, onChange }: { data: IItem; onChange: (new
   }));
 
   const onApplyDiscountsChanged = () => {
+    if (useCustomFinalPrice) return;
+
     setApplyDiscount((prev) => !prev);
     runOnUISync(() => {
       "worklet";
       discountsListHeightValue.value = measure(discountsListRef).height;
     });
+    onChange({ applyDiscounts: !applyDiscounts });
   };
 
   const onContainerOpenChanged = () => {
     setContainerOpen((prev) => !prev);
+
+    // measure only the first time
+    if (_containerHeightValue.value === 0) {
+      runOnUISync(() => {
+        "worklet";
+        _containerHeightValue.value = measure(containerRef).height;
+        containerSubInfoHeightValue.value = measure(containerSubInfoRef).height;
+
+        // needs a first time calculation when value is true by default
+        discountsListHeightValue.value = measure(discountsListRef).height;
+        customPriceHeightValue.value = measure(customPriceRef).height;
+      });
+    }
+  };
+
+  const onUseCustomFinalPriceChanged = () => {
+    setCustomFinalPrice(unitFinalPrice);
+    setUseCustomFinalPrice((prev) => !prev);
     runOnUISync(() => {
       "worklet";
-      _containerHeightValue.value = measure(containerRef).height;
-      containerSubInfoHeightValue.value = measure(containerSubInfoRef).height;
+      customPriceHeightValue.value = measure(customPriceRef).height;
     });
+    onChange({ useCustomFinalPrice: !useCustomFinalPrice });
   };
 
   const unitPriceStr = formatBRL(Math.round(unitPrice * 100));
@@ -139,11 +180,13 @@ export const useProductItem = ({ data, onChange }: { data: IItem; onChange: (new
       discountsListAnimationStyle,
       containerAnimationStyle,
       containerSubInfoAnimationStyle,
+      customPriceAnimationStyle,
     },
     refs: {
       discountsListRef,
       containerRef,
       containerSubInfoRef,
+      customPriceRef,
     },
     states: {
       unitsStr,
@@ -159,6 +202,9 @@ export const useProductItem = ({ data, onChange }: { data: IItem; onChange: (new
       unitPriceDiscounted,
 
       containerOpen,
+
+      useCustomFinalPrice,
+      customFinalPrice,
     },
     on: {
       unitsChanged: onUnitsChanged,
@@ -168,6 +214,8 @@ export const useProductItem = ({ data, onChange }: { data: IItem; onChange: (new
       discountsChanged: onDiscountsChanged,
       discountsPercChanged: onDiscountsPercChanged,
       containerOpenChanged: onContainerOpenChanged,
+      customFinalPriceChanged: onCustomFinalPriceChanged,
+      useCustomFinalPriceChanged: onUseCustomFinalPriceChanged,
     },
   };
 };

@@ -38,7 +38,7 @@ const lightColors: ColorScheme = {
   primary: "#3b82f6",
   success: "#10b981",
   warning: "#f59e0b",
-  danger: "#ef4444",
+  danger: "#f87171",
   shadow: "#000000",
   gradients: {
     background: ["#f8fafc", "#e2e8f0"],
@@ -66,7 +66,7 @@ const darkColors: ColorScheme = {
   primary: "#60a5fa",
   success: "#34d399",
   warning: "#fbbf24",
-  danger: "#f87171",
+  danger: "#ef4444",
   shadow: "#000000",
   gradients: {
     background: ["#0f172a", "#1e293b"],
@@ -95,9 +95,7 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
   const colorScheme = useColorScheme();
   const colors = colorScheme === "dark" ? darkColors : lightColors;
 
-  return (
-    <ThemeContext.Provider value={{ colors }}>{children}</ThemeContext.Provider>
-  );
+  return <ThemeContext.Provider value={{ colors }}>{children}</ThemeContext.Provider>;
 };
 
 const useTheme = () => {
