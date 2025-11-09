@@ -21,6 +21,9 @@ export type IItem = {
   discountPerc: number;
   useCustomFinalPrice?: boolean;
   customFinalPrice?: number;
+  useRounding?: boolean;
+  roundingSteps?: number;
+  roundingDirection?: "up" | "down";
 };
 
 export type IScanData = {

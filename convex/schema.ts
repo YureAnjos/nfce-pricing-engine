@@ -11,6 +11,9 @@ export const itemFields = {
   discountPerc: v.number(),
   useCustomFinalPrice: v.optional(v.boolean()),
   customFinalPrice: v.optional(v.number()),
+  useRounding: v.optional(v.boolean()),
+  roundingSteps: v.optional(v.number()),
+  roundingDirection: v.optional(v.string()),
 };
 
 export const noteFields = {

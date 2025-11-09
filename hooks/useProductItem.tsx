@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Animated, {
   Extrapolation,
   interpolate,
@@ -11,7 +11,7 @@ import Animated, {
 } from "react-native-reanimated";
 import { runOnUISync } from "react-native-worklets";
 import { IItem } from "../types/types";
-import { formatBRL, toNumber } from "../util";
+import { formatBRL, roundCents, toNumber } from "../util";
 
 export const useProductItem = ({ data, onChange }: { data: IItem; onChange: (newData: Partial<IItem>) => void }) => {
   const [unitsStr, setUnitsStr] = useState(String(data.units) ?? "0");
@@ -22,7 +22,15 @@ export const useProductItem = ({ data, onChange }: { data: IItem; onChange: (new
   const [discountsPerc, setDiscountsPerc] = useState(data.discountPerc ?? 0);
   const [useCustomFinalPrice, setUseCustomFinalPrice] = useState(data.useCustomFinalPrice ?? false);
   const [customFinalPrice, setCustomFinalPrice] = useState(data.customFinalPrice ?? 0);
+  const [useRounding, setUseRounding] = useState(data.useRounding ?? true);
+  const [roundingSteps, setRoundingSteps] = useState(data.roundingSteps ?? 5);
+  const [roundingDirection, setRoundingDirection] = useState(data.roundingDirection ?? "up");
   const [lastChanged, setLastChanged] = useState<"discounts" | "discountsPerc" | null>(null);
+
+  const fiveCentsCheckboxRef = useRef(null);
+  const tenCentsCheckboxRef = useRef(null);
+  const upDirCheckboxRef = useRef(null);
+  const downDirCheckboxRef = useRef(null);
 
   // updates states when data prop changes
   useEffect(() => {
@@ -33,6 +41,9 @@ export const useProductItem = ({ data, onChange }: { data: IItem; onChange: (new
     setDiscountsPerc(data.discountPerc ?? 0);
     setUseCustomFinalPrice(data.useCustomFinalPrice ?? false);
     setCustomFinalPrice(data.customFinalPrice ?? 0);
+    setUseRounding(data.useRounding ?? true);
+    setRoundingSteps(data.roundingSteps ?? 5);
+    setRoundingDirection(data.roundingDirection ?? "up");
   }, [data]);
 
   useEffect(() => {
@@ -77,6 +88,26 @@ export const useProductItem = ({ data, onChange }: { data: IItem; onChange: (new
     setCustomFinalPrice(value / 100);
     onChange({ customFinalPrice: value / 100 });
   };
+  const onFiveCentsPressed = () => {
+    if (useCustomFinalPrice) return;
+    setRoundingSteps(5);
+    onChange({ roundingSteps: 5 });
+  };
+  const onTenCentsPressed = () => {
+    if (useCustomFinalPrice) return;
+    setRoundingSteps(10);
+    onChange({ roundingSteps: 10 });
+  };
+  const onUpDirPressed = () => {
+    if (useCustomFinalPrice) return;
+    setRoundingDirection("up");
+    onChange({ roundingDirection: "up" });
+  };
+  const onDownDirPressed = () => {
+    if (useCustomFinalPrice) return;
+    setRoundingDirection("down");
+    onChange({ roundingDirection: "down" });
+  };
 
   const units = Math.floor(toNumber(unitsStr));
   const unitPrice = price / units;
@@ -87,11 +118,23 @@ export const useProductItem = ({ data, onChange }: { data: IItem; onChange: (new
     unitFinalPrice = customFinalPrice;
   }
 
+  let unitFinalPriceRounded = unitFinalPrice;
+  if (useRounding) {
+    unitFinalPriceRounded = roundCents(unitFinalPrice, roundingSteps, roundingDirection);
+  }
+
   const discountsListRef = useAnimatedRef<Animated.View>();
   const discountsListHeightValue = useSharedValue(0);
   const discountsAnimProgress = useDerivedValue(() => (applyDiscounts ? withTiming(1) : withTiming(0)));
   const discountsListAnimationStyle = useAnimatedStyle(() => ({
     height: interpolate(discountsAnimProgress.value, [0, 1], [0, discountsListHeightValue.value], Extrapolation.CLAMP),
+  }));
+
+  const roundingRef = useAnimatedRef<Animated.View>();
+  const roundingHeightValue = useSharedValue(0);
+  const roundingAnimProgress = useDerivedValue(() => (useRounding ? withTiming(1) : withTiming(0)));
+  const roundingAnimationStyle = useAnimatedStyle(() => ({
+    height: interpolate(roundingAnimProgress.value, [0, 1], [0, roundingHeightValue.value], Extrapolation.CLAMP),
   }));
 
   const customPriceRef = useAnimatedRef<Animated.View>();
@@ -108,7 +151,8 @@ export const useProductItem = ({ data, onChange }: { data: IItem; onChange: (new
     () =>
       _containerHeightValue.value +
       (applyDiscounts ? discountsListHeightValue.value : 0) +
-      (useCustomFinalPrice ? customPriceHeightValue.value : 0)
+      (useCustomFinalPrice ? customPriceHeightValue.value : 0) +
+      (useRounding ? roundingHeightValue.value : 0)
   );
   const containerSubInfoHeightValue = useSharedValue(18.6666); // estimated size, used because this is open by default
 
@@ -137,6 +181,17 @@ export const useProductItem = ({ data, onChange }: { data: IItem; onChange: (new
     onChange({ applyDiscounts: !applyDiscounts });
   };
 
+  const onUseRoundingChanged = () => {
+    if (useCustomFinalPrice) return;
+
+    setUseRounding((prev) => !prev);
+    runOnUISync(() => {
+      "worklet";
+      roundingHeightValue.value = measure(roundingRef).height;
+    });
+    onChange({ useRounding: !useRounding });
+  };
+
   const onContainerOpenChanged = () => {
     setContainerOpen((prev) => !prev);
 
@@ -150,12 +205,13 @@ export const useProductItem = ({ data, onChange }: { data: IItem; onChange: (new
         // needs a first time calculation when value is true by default
         discountsListHeightValue.value = measure(discountsListRef).height;
         customPriceHeightValue.value = measure(customPriceRef).height;
+        roundingHeightValue.value = measure(roundingRef).height;
       });
     }
   };
 
   const onUseCustomFinalPriceChanged = () => {
-    setCustomFinalPrice(unitFinalPrice);
+    setCustomFinalPrice(useRounding ? unitFinalPriceRounded : unitFinalPrice);
     setUseCustomFinalPrice((prev) => !prev);
     runOnUISync(() => {
       "worklet";
@@ -166,8 +222,9 @@ export const useProductItem = ({ data, onChange }: { data: IItem; onChange: (new
 
   const unitPriceStr = formatBRL(Math.round(unitPrice * 100));
   const finalPriceStr = formatBRL(Math.round(priceDiscounted * 100));
-  const unitFinalPriceStr = formatBRL(Math.round(unitFinalPrice * 100));
   const unitPriceDiscountedStr = formatBRL(Math.round(unitPriceDiscounted * 100));
+  const unitFinalPriceStr = formatBRL(Math.round(unitFinalPrice * 100));
+  const unitFinalPriceRoundedStr = formatBRL(unitFinalPriceRounded * 100);
 
   return {
     strs: {
@@ -175,18 +232,25 @@ export const useProductItem = ({ data, onChange }: { data: IItem; onChange: (new
       unitFinalPriceStr,
       unitPriceDiscountedStr,
       unitPriceStr,
+      unitFinalPriceRoundedStr,
     },
     animatedStyles: {
       discountsListAnimationStyle,
       containerAnimationStyle,
       containerSubInfoAnimationStyle,
       customPriceAnimationStyle,
+      roundingAnimationStyle,
     },
     refs: {
       discountsListRef,
       containerRef,
       containerSubInfoRef,
       customPriceRef,
+      roundingRef,
+      fiveCentsCheckboxRef,
+      tenCentsCheckboxRef,
+      upDirCheckboxRef,
+      downDirCheckboxRef,
     },
     states: {
       unitsStr,
@@ -205,6 +269,10 @@ export const useProductItem = ({ data, onChange }: { data: IItem; onChange: (new
 
       useCustomFinalPrice,
       customFinalPrice,
+
+      useRounding,
+      roundingSteps,
+      roundingDirection,
     },
     on: {
       unitsChanged: onUnitsChanged,
@@ -216,6 +284,11 @@ export const useProductItem = ({ data, onChange }: { data: IItem; onChange: (new
       containerOpenChanged: onContainerOpenChanged,
       customFinalPriceChanged: onCustomFinalPriceChanged,
       useCustomFinalPriceChanged: onUseCustomFinalPriceChanged,
+      useRoundingChanged: onUseRoundingChanged,
+      fiveCentsPressed: onFiveCentsPressed,
+      tenCentsPressed: onTenCentsPressed,
+      upDirPressed: onUpDirPressed,
+      downDirPressed: onDownDirPressed,
     },
   };
 };

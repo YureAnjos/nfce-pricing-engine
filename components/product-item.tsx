@@ -1,6 +1,7 @@
 import React from "react";
 
 import { Pressable, StyleSheet, Switch, Text, View } from "react-native";
+import BouncyCheckbox from "react-native-bouncy-checkbox";
 import Animated from "react-native-reanimated";
 import CurrencyInput from "./currency-input";
 import Input from "./input";
@@ -31,7 +32,7 @@ const ProductItem = ({ data, onChange }: { data: IItem; onChange: (newData: IIte
               states.containerOpen ? { width: 0, height: 0 } : {},
             ]}
           >
-            {strs.unitFinalPriceStr}
+            {states.useRounding ? strs.unitFinalPriceRoundedStr : strs.unitFinalPriceStr}
           </Text>
         </View>
 
@@ -98,6 +99,7 @@ const ProductItem = ({ data, onChange }: { data: IItem; onChange: (newData: IIte
             disabled={states.useCustomFinalPrice}
           />
 
+          {/* Discounts Container */}
           <View style={{ overflow: "hidden" }}>
             <Pressable style={styles.switchContainer} onPress={on.applyDiscountsChanged}>
               <Switch
@@ -133,6 +135,116 @@ const ProductItem = ({ data, onChange }: { data: IItem; onChange: (newData: IIte
             </Animated.View>
           </View>
 
+          {/* Round Container */}
+          <View style={{ overflow: "hidden" }}>
+            <Pressable style={styles.switchContainer} onPress={on.useRoundingChanged}>
+              <Switch
+                value={states.useRounding}
+                onValueChange={on.useRoundingChanged}
+                disabled={states.useCustomFinalPrice}
+              />
+              <Text style={[styles.highlightedText, { opacity: states.useCustomFinalPrice ? 0.5 : 1 }]}>
+                Aplicar arredondamento
+              </Text>
+            </Pressable>
+
+            <Animated.View style={animatedStyles.roundingAnimationStyle}>
+              <Animated.View ref={refs.roundingRef} style={styles.itemRow}>
+                <View style={{ flexDirection: "row", gap: 20, paddingVertical: 8, paddingHorizontal: 16 }}>
+                  <View style={{ gap: 8 }}>
+                    <View style={{ flexDirection: "row" }}>
+                      <BouncyCheckbox
+                        size={20}
+                        fillColor={colors.text}
+                        useBuiltInState={false}
+                        isChecked={states.roundingSteps === 5}
+                        onPress={on.fiveCentsPressed}
+                        ref={refs.fiveCentsCheckboxRef}
+                        style={{ opacity: states.useCustomFinalPrice ? 0.5 : 1 }}
+                      />
+                      <Pressable
+                        onPress={() => {
+                          on.fiveCentsPressed();
+                          refs.fiveCentsCheckboxRef.current?.onCheckboxPress();
+                        }}
+                      >
+                        <Text style={[styles.text, { opacity: states.useCustomFinalPrice ? 0.5 : 1 }]}>5 Centavos</Text>
+                      </Pressable>
+                    </View>
+
+                    <View style={{ flexDirection: "row", flex: 1 }}>
+                      <BouncyCheckbox
+                        size={20}
+                        fillColor={colors.text}
+                        useBuiltInState={false}
+                        isChecked={states.roundingDirection === "up"}
+                        onPress={on.upDirPressed}
+                        ref={refs.upDirCheckboxRef}
+                        style={{ opacity: states.useCustomFinalPrice ? 0.5 : 1 }}
+                      />
+                      <Pressable
+                        onPress={() => {
+                          on.upDirPressed();
+                          refs.upDirCheckboxRef.current?.onCheckboxPress();
+                        }}
+                      >
+                        <Text style={[styles.text, { opacity: states.useCustomFinalPrice ? 0.5 : 1 }]}>Para cima</Text>
+                      </Pressable>
+                    </View>
+                  </View>
+
+                  <View style={{ gap: 8 }}>
+                    <View style={{ flexDirection: "row" }}>
+                      <BouncyCheckbox
+                        size={20}
+                        fillColor={colors.text}
+                        useBuiltInState={false}
+                        isChecked={states.roundingSteps === 10}
+                        onPress={on.tenCentsPressed}
+                        ref={refs.tenCentsCheckboxRef}
+                        style={{ opacity: states.useCustomFinalPrice ? 0.5 : 1 }}
+                      />
+                      <Pressable
+                        onPress={() => {
+                          on.tenCentsPressed();
+                          refs.tenCentsCheckboxRef.current?.onCheckboxPress();
+                        }}
+                      >
+                        <Text style={[styles.text, { opacity: states.useCustomFinalPrice ? 0.5 : 1 }]}>
+                          10 Centavos
+                        </Text>
+                      </Pressable>
+                    </View>
+
+                    <View style={{ flexDirection: "row", flex: 1 }}>
+                      <BouncyCheckbox
+                        size={20}
+                        fillColor={colors.text}
+                        useBuiltInState={false}
+                        isChecked={states.roundingDirection === "down"}
+                        onPress={on.downDirPressed}
+                        ref={refs.downDirCheckboxRef}
+                        style={{ opacity: states.useCustomFinalPrice ? 0.5 : 1 }}
+                      />
+                      <Pressable
+                        onPress={() => {
+                          on.downDirPressed();
+                          refs.downDirCheckboxRef.current?.onCheckboxPress();
+                        }}
+                      >
+                        <Text style={[styles.text, { opacity: states.useCustomFinalPrice ? 0.5 : 1 }]}>Para baixo</Text>
+                      </Pressable>
+                    </View>
+                  </View>
+                </View>
+
+                <Text style={[styles.text, { paddingHorizontal: 16 }]}>
+                  {`${strs.unitFinalPriceStr}  ->  ${strs.unitFinalPriceRoundedStr}`}
+                </Text>
+              </Animated.View>
+            </Animated.View>
+          </View>
+
           {/* Use Custom Final Price */}
           <View style={{ overflow: "hidden" }}>
             <Pressable style={styles.switchContainer} onPress={on.useCustomFinalPriceChanged}>
@@ -153,7 +265,9 @@ const ProductItem = ({ data, onChange }: { data: IItem; onChange: (newData: IIte
 
           <View>
             <Text style={styles.finalPrice}>Preço de Custo Total: {strs.finalPriceStr}</Text>
-            <Text style={styles.finalPrice}>Preço Final por Unidade: {strs.unitFinalPriceStr}</Text>
+            <Text style={styles.finalPrice}>
+              Preço Final por Unidade: {states.useRounding ? strs.unitFinalPriceRoundedStr : strs.unitFinalPriceStr}
+            </Text>
           </View>
         </Animated.View>
       </Animated.View>

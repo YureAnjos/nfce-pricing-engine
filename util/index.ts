@@ -31,3 +31,15 @@ export const toNumber = (text: string) => {
   const n = parseFloat(normalized);
   return Number.isFinite(n) ? n : 0;
 };
+
+export const roundCents = (value: number, steps: number, direction: "up" | "down") => {
+  const cents = value * 100;
+
+  if (direction === "up") {
+    return (Math.ceil(cents / steps) * steps) / 100;
+  } else if (direction === "down") {
+    return (Math.floor(cents / steps) * steps) / 100;
+  } else {
+    return (Math.round(cents / steps) * steps) / 100;
+  }
+};
