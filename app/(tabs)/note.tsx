@@ -2,7 +2,16 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useMutation } from "convex/react";
 import { LinearGradient } from "expo-linear-gradient";
 import React, { useEffect, useRef, useState } from "react";
-import { ActivityIndicator, AppState, FlatList, StyleSheet, Text, View } from "react-native";
+import {
+  ActivityIndicator,
+  AppState,
+  FlatList,
+  KeyboardAvoidingView,
+  Platform,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Card from "../../components/card";
 import ProductItem from "../../components/product-item";
@@ -99,53 +108,59 @@ const Note = () => {
   return (
     <LinearGradient style={styles.gradient} colors={colors.gradients.background}>
       <SafeAreaView style={styles.container}>
-        <Text style={styles.title}>Nota Fiscal</Text>
+        <KeyboardAvoidingView
+          style={{ flex: 1, width: "100%", alignItems: "center", gap: 16 }}
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          keyboardVerticalOffset={Platform.OS === "ios" ? 80 : 0}
+        >
+          <Text style={styles.title}>Nota Fiscal</Text>
 
-        {contextScanData ? (
-          <>
-            <Card title="Resumo da Nota">
-              <Text style={styles.text}>
-                <Text style={styles.highlightedText}>{"Fornecedor:"}</Text> {contextScanData.name}
-              </Text>
-              <Text style={styles.text}>
-                <Text style={styles.highlightedText}>{"Data:"}</Text> {contextScanData.date}
-              </Text>
-              <Text style={styles.text}>
-                <Text style={styles.highlightedText}>{"Total:"}</Text> R$ {contextScanData.totalPrice}
-              </Text>
-            </Card>
+          {contextScanData ? (
+            <>
+              <Card title="Resumo da Nota">
+                <Text style={styles.text}>
+                  <Text style={styles.highlightedText}>{"Fornecedor:"}</Text> {contextScanData.name}
+                </Text>
+                <Text style={styles.text}>
+                  <Text style={styles.highlightedText}>{"Data:"}</Text> {contextScanData.date}
+                </Text>
+                <Text style={styles.text}>
+                  <Text style={styles.highlightedText}>{"Total:"}</Text> R$ {contextScanData.totalPrice}
+                </Text>
+              </Card>
 
-            {contextScanData && (
-              <LinearGradient
-                colors={colors.gradients.surface}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={{ flex: 1, padding: 16, borderRadius: 12, width: "100%" }}
-              >
-                <FlatList
-                  data={contextScanData.items}
-                  renderItem={(item) => (
-                    <ProductItem
-                      key={resetVersion}
-                      data={item.item}
-                      onChange={(newData) => onItemUpdated(item.index, newData)}
-                    />
-                  )}
-                  ItemSeparatorComponent={() => <View style={styles.separator} />}
-                  showsVerticalScrollIndicator={false}
-                />
-              </LinearGradient>
-            )}
+              {contextScanData && (
+                <LinearGradient
+                  colors={colors.gradients.surface}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={{ flex: 1, padding: 16, borderRadius: 12, width: "100%" }}
+                >
+                  <FlatList
+                    data={contextScanData.items}
+                    renderItem={(item) => (
+                      <ProductItem
+                        key={resetVersion}
+                        data={item.item}
+                        onChange={(newData) => onItemUpdated(item.index, newData)}
+                      />
+                    )}
+                    ItemSeparatorComponent={() => <View style={styles.separator} />}
+                    showsVerticalScrollIndicator={false}
+                  />
+                </LinearGradient>
+              )}
 
-            <Button
-              text={saving ? "Salvando..." : "Salvar alterações"}
-              onPress={saveAction}
-              disabled={saving || !hasChanges}
-            />
-          </>
-        ) : (
-          <Text style={styles.text}>Leia um QR-Code para obter as informações</Text>
-        )}
+              <Button
+                text={saving ? "Salvando..." : "Salvar alterações"}
+                onPress={saveAction}
+                disabled={saving || !hasChanges}
+              />
+            </>
+          ) : (
+            <Text style={styles.text}>Leia um QR-Code para obter as informações</Text>
+          )}
+        </KeyboardAvoidingView>
       </SafeAreaView>
     </LinearGradient>
   );
