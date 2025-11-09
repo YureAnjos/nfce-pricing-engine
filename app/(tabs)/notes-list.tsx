@@ -31,7 +31,7 @@ const Index = () => {
 
   const notes = useQuery(api.notes.getNotes);
   if (notes) {
-    notes.sort((a, b) => parseDateString(b.date).getTime() - parseDateString(a.date).getTime());
+    notes.sort((a, b) => parseDateString(a.date).getTime() - parseDateString(b.date).getTime());
   }
 
   const onCardClickAction = (data: IScanData) => {
