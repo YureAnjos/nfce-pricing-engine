@@ -14,14 +14,19 @@ import { IItem, IScanData } from "../../types/types";
 
 const Note = () => {
   const { colors } = useTheme();
-  const { scanData: contextScanData, loading } = useMainContext();
+  const { scanData: contextScanData, loading, setScanData: setContextScanData } = useMainContext();
+
+  const lastSavedRef = useRef<string | null>(null);
+  const scanData = useRef<IScanData>(null);
+
   const [saving, setSaving] = useState(false);
   const [resetVersion, setResetVersion] = useState(0);
   const [loadingNote, setLoadingNote] = useState(false);
-  const styles = createNoteStyles(colors);
+  const [hasChanges, setHasChanges] = useState(false);
+
   const saveNote = useMutation(api.notes.saveNote);
-  const lastSavedRef = useRef<string | null>(null);
-  const scanData = useRef<IScanData>(null);
+
+  const styles = createNoteStyles(colors);
 
   const saveDataInLocalDB = () => {
     setTimeout(async () => {
@@ -35,7 +40,6 @@ const Note = () => {
 
   useEffect(() => {
     const subscription = AppState.addEventListener("change", (nextAppState) => {
-      console.log(nextAppState);
       if (nextAppState !== "background" && nextAppState !== "inactive") return;
       saveDataInLocalDB();
     });
@@ -61,6 +65,12 @@ const Note = () => {
     updatedItems[index] = { ...updatedItems[index], ...newData };
     scanData.current = { ...scanData.current, items: updatedItems };
     saveDataInLocalDB();
+
+    if (JSON.stringify(scanData.current) !== JSON.stringify(contextScanData) && !hasChanges) {
+      setHasChanges(true);
+    } else if (JSON.stringify(scanData.current) === JSON.stringify(contextScanData) && hasChanges) {
+      setHasChanges(false);
+    }
   };
 
   const saveAction = async () => {
@@ -71,6 +81,7 @@ const Note = () => {
       console.warn("Error while saving note: ", err);
     } finally {
       setSaving(false);
+      setContextScanData({ ...scanData.current }); // force update
     }
   };
 
@@ -125,12 +136,16 @@ const Note = () => {
                 />
               </LinearGradient>
             )}
+
+            <Button
+              text={saving ? "Salvando..." : "Salvar alterações"}
+              onPress={saveAction}
+              disabled={saving || !hasChanges}
+            />
           </>
         ) : (
           <Text style={styles.text}>Leia um QR-Code para obter as informações</Text>
         )}
-
-        <Button text={saving ? "Salvando..." : "Salvar alterações"} onPress={saveAction} disabled={saving} />
       </SafeAreaView>
     </LinearGradient>
   );
