@@ -20,10 +20,7 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "permissions": [
-        "android.permission.CAMERA",
-        "android.permission.RECORD_AUDIO"
-      ],
+      "permissions": ["android.permission.CAMERA", "android.permission.RECORD_AUDIO"],
       "package": "com.anonymous.painotafiscal"
     },
     "web": {
@@ -72,7 +69,8 @@
       "router": {},
       "eas": {
         "projectId": "7b14897d-ae32-4ee6-abac-47c684028d46"
-      }
+      },
+      "EXPO_PUBLIC_CONVEX_URL": "env:EXPO_PUBLIC_CONVEX_URL"
     }
   }
 }
